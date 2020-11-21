@@ -2,6 +2,8 @@
 #define BUBBLE_BUCKET_H
 
 #include <vector>
+#include <exception>
+#include <string>
 #include <sstream>
 #include <algorithm>
 using namespace std;
@@ -58,6 +60,7 @@ public:
             data[fill++] = p;
             tids[fill++] = tid;
         }
+        return 1; //-1 for overflow and 1 for success
     }
 
     Point remove(int tid){
@@ -124,11 +127,66 @@ public:
         }
     }
 
-    int insert(Point p, int tid){}
+    int insert(Point p, int tid){
+        int delim = p.coords[level];
+        int check = 0;
+        for(int i = 0; i < knode.size(); i++){
+            if(delim <= knode[i]){
+                check = buckets[i].insert(p,tid);
+            }
+        }
+        if(check == 0) check = buckets[buckets.size()-1].insert(p,tid);
+        return check; //-1 for overflow and 1 for success
+    }
 
-    Point remove(int tid){}
-    
-    Point find(int tid){}
+    Point remove(Point p, int tid){
+        int delim = p.coords[level];
+        for(int i = 0; i < knode.size(); i++){
+            if(delim <= knode[i]){
+                try{
+                    return buckets[i].remove(tid);
+                }
+                catch(string s){}
+            }
+        }
+        try{
+            return buckets[buckets.size()-1].remove(tid);
+        }
+        catch(string s){
+            stringstream ss;
+            ss << "Error: SuperBubbleBucket(" << id << ") remove didn\'t find tid: " << tid;
+            throw ss.str();
+        }
+        catch(...){
+            stringstream ss;
+            ss << "Unknown Error in SuperBubbleBucket(" << id << ")";
+            throw ss.str();
+        }
+    }
+
+    Point remove(int tid){
+        for(auto bucket: buckets){
+            try{
+                return bucket.remove(tid);
+            }
+            catch(string s){}
+        }
+        stringstream ss;
+        ss << "Error: SuperBubbleBucket(" << id << ") remove didn\'t find tid: " << tid;
+        throw ss.str();
+    }
+
+    Point find(int tid){
+        for(auto bucket: buckets){
+            try{
+                return bucket.find(tid);
+            }
+            catch(...){}
+        }
+        stringstream ss;
+        ss << "Error: SuperBubbleBucket(" << id << ") find didn\'t find tid: " << tid;
+        throw ss.str();
+    }
 };
 
 #endif
