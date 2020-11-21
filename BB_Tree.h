@@ -3,10 +3,12 @@
 
 #include "KNode.h"
 #include "BubbleBucket.h"
+#include <vector>
 
 class BB_Tree{
-    //int* kary;
-    //int k;
+    vector<int> kary;
+    int k; //size of inner search nodes
+    int m; //dimensionality of data
 public:
     //constructor
 
