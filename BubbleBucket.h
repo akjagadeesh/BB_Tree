@@ -16,11 +16,16 @@ public:
     int id; // key for indexing from BBTree
     int level; // used for insert/search decisions
 
-    Bucket(int _k, int _m, int _bmax, int _id): k(_k), m(_m), bmax(_bmax), id(_id), level(int(log(id)/log(k))%m) {}
+    Bucket(int _k, int _m, int _bmax, int _id): k(_k), m(_m), bmax(_bmax), id(_id) {
+        if(id == 0) level = 0;
+        else level = int(log(id) / log(k)) % m;
+    }
 
     virtual int insert(Point p, int tid) = 0;
     virtual Point remove(int tid) = 0;
     virtual Point find(int tid) = 0;
+    virtual bool superId() = 0;
+    virtual vector<Point> dump() = 0;
 };
 
 struct Point{
@@ -40,6 +45,15 @@ struct Point{
             throw ss.str();
         }
         coords = _coords;
+    }
+
+    bool operator<(Point p){
+        for(int i = 0; i < m; i++){
+            if(coords[i] < p.coords[i]) return true;
+            else if (coords[i] == p.coords[i]) continue;
+            else return false;
+        }
+        return false;
     }
 };
 
@@ -94,9 +108,15 @@ public:
 
     bool empty(){ return fill == 0; }
 
+    bool superId(){ return false; }
+
     pair<int,Point> pop(){ //used for morphing to SuperBB
         if(empty()) throw "Error: Pop of empty BubbleBucket";
         return make_pair(tids[fill-1],data[--fill]);
+    }
+
+    vector<Point> dump(){
+        return data;
     }
 };
 
@@ -186,6 +206,17 @@ public:
         stringstream ss;
         ss << "Error: SuperBubbleBucket(" << id << ") find didn\'t find tid: " << tid;
         throw ss.str();
+    }
+
+    bool superId(){ return true; }
+
+    vector<Point> dump(){
+        vector<Point> data;
+        for(auto bucket: buckets){
+            vector<Point> temp = bucket.dump();
+            data.insert(data.end(), temp.begin(), temp.end());
+        }
+        return data;
     }
 };
 
