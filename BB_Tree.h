@@ -1,7 +1,6 @@
 #ifndef BB_TREE_H
 #define BB_TREE_H
 
-#include "KNode.h"
 #include "BubbleBucket.h"
 #include <vector>
 #include <map>

@@ -160,17 +160,18 @@ public:
     }
 
     Point remove(Point p, int tid){
+        Point victim;
         int delim = p.coords[level];
         for(int i = 0; i < knode.size(); i++){
             if(delim <= knode[i]){
                 try{
-                    return buckets[i].remove(tid);
+                    victim = buckets[i].remove(tid);
                 }
                 catch(string s){}
             }
         }
         try{
-            return buckets[buckets.size()-1].remove(tid);
+            victim = buckets[buckets.size()-1].remove(tid);
         }
         catch(string s){
             stringstream ss;
@@ -182,6 +183,8 @@ public:
             ss << "Unknown Error in SuperBubbleBucket(" << id << ")";
             throw ss.str();
         }
+        //check if empty -> morph to BubbleBucket
+        return victim;
     }
 
     Point remove(int tid){
