@@ -115,7 +115,7 @@ public:
     }
 
     //delete
-    Point remove(int _tid){
+    Point remove(Point p, int _tid){
         int level = 0;
         int node = 0;
         bool changed = false;
@@ -135,7 +135,6 @@ public:
     }
 
     //Point remove(Point p) {}
-    //Point remove(Point p, int _tid) {}
 
     //search & range search?
 };

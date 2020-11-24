@@ -6,5 +6,8 @@
 using namespace std;
 
 int main(){
+    BBTree t;
+    vector<int> datapts;
+    t.insert(Point(datapts.size(),datapts));
     return 0;
 }
