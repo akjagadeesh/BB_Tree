@@ -1,0 +1,21 @@
+make clean all
+./benchmark 1000000 5 2 0.0
+./benchmark 1000000 5 2 0.398107
+./benchmark 1000000 5 2 0.457305
+./benchmark 1000000 5 2 0.495934
+./benchmark 1000000 5 2 0.525306
+./benchmark 1000000 5 2 0.54928
+./benchmark 1000000 5 2 0.569679
+./benchmark 1000000 5 2 0.587516
+./benchmark 1000000 5 2 0.603418
+./benchmark 1000000 5 2 0.617801
+./benchmark 1000000 5 2 0.630957
+./benchmark 1000000 5 2 0.72478
+./benchmark 1000000 5 2 0.786003
+./benchmark 1000000 5 2 0.832553
+./benchmark 1000000 5 2 0.870551
+./benchmark 1000000 5 2 0.90288
+./benchmark 1000000 5 2 0.93115
+./benchmark 1000000 5 2 0.956352
+./benchmark 1000000 5 2 0.979148
+./benchmark 1000000 5 2 1.0
