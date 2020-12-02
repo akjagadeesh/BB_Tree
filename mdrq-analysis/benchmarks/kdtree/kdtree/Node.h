@@ -46,6 +46,31 @@ class Node {
 
 			return depth;
 		}
+		
+		//ADDED--
+		int searchObject(std::vector<float> feature_vector){
+			if (feature_vector[delimiter_dimension] <= data_object[delimiter_dimension]) {
+				bool match = true;
+				for (size_t i = 0; i < data_object.size(); ++i) {
+					match = (match && data_object[i] == feature_vector[i]);
+				}
+				if (match)
+					return id;
+
+				if (left_child == NULL) {
+					return -1;
+				} else {
+					return left_child->searchObject(feature_vector);
+				}
+			} else {
+				if (right_child == NULL) {
+					return -1;
+				} else {
+					return right_child->searchObject(feature_vector);
+				}
+			}
+		}
+		//--ADDED
 
 		std::vector<uint32_t> rangeSearch(std::vector<uint32_t> &results, std::vector<float> min, std::vector<float> max) {
 			bool match = true;

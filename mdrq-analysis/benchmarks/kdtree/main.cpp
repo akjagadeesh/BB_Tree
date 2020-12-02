@@ -34,6 +34,38 @@ static double gettime(void) {
   return ((double)now_tv.tv_sec) + ((double)now_tv.tv_usec) / 1000000.0;
 }
 
+//ADDED--
+// determines the statistical average (mean) of a given sequence of doubles.
+static double getaverage(double* runtimes, size_t n) {
+  double sum = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    sum += runtimes[i];
+  }
+
+  return (sum / n);
+}
+
+// determines the standard deviation of a given sequence of doubles.
+static double getstddev(double* runtimes, size_t n) {
+  double avg = 0.0;
+  double std_dev = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    avg += runtimes[i];
+  }
+  avg = (avg / n);
+
+  for (size_t i = 0; i < n; ++i) {
+    std_dev += (runtimes[i] - avg) * (runtimes[i] - avg);
+  }
+  std_dev = std_dev / n;
+  std_dev = sqrt(std_dev);
+
+  return std_dev;
+}
+//--ADDED
+
 int main(int argc, char* argv[]) {
   if (argc < 4) {
     std::cout << "Usage: " << argv[0] << " num_elements num_dimensions distribution(0=normal, 1=clustered, 2=uniform, 3=gmrqb, 4=power)" << std::endl;
@@ -134,7 +166,7 @@ int main(int argc, char* argv[]) {
         if (atoi(argv[3]) == 0)
           data_point[j] = (float) nd(gen);
         else
-          data_point[j] = (float) ((rand() % (o * 1000000)) / 1000000.0);
+          data_point[j] = (float) ud(gen); //ADDED
       }
       kdtree_points[i] = data_point;
     }
@@ -146,13 +178,32 @@ int main(int argc, char* argv[]) {
   std::random_shuffle(kdtree_points.begin(), kdtree_points.end());
 
   double start = gettime();
+  //ADDED--
+  double* runtimes;
   Tree* kd_tree = new Tree();
 
+  std::cout << "KDTree [inserts]" << std::endl;
+  runtimes = new double[n];
   for (size_t i = 0; i < n; ++i) {
+    start = gettime();
     kd_tree->insertObject(kdtree_points[i], (i+1));
-    insert(index, kdtree_points[i]);
+    runtimes[i] = (gettime() - start) * 1000000;
+    insert(index, kdtree_points[i]); //used for parallelization
   }
-  load_partitions(index);
+  load_partitions(index); //used for parallelization
+  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " << getstddev(runtimes, n) << std::endl;
+  delete runtimes;
+
+  std::cout << "KDTree [point queries]" << std::endl;
+  runtimes = new double[n];
+  for (size_t i = 0; i < n; ++i) {
+    start = gettime();
+    assert((i+1) == kd_tree->searchObject(kdtree_points[i]));
+    runtimes[i] = (gettime() - start) * 1000000;
+  }
+  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " << getstddev(runtimes, n) << std::endl;
+  delete runtimes;
+  //--ADDED
 
   int avg_result_size = 0;
   size_t repeat = 1;
@@ -203,6 +254,21 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  //ADDED--
+  std::cout << "KDTree [range queries]" << std::endl;
+  runtimes = new double[rq];
+  for (size_t i = 0; i < rq; ++i) {
+    start = gettime();
+    std::vector<uint32_t> results =  kd_tree->rangeSearch(lb_queries[i],ub_queries[i]);
+    runtimes[i] = (gettime() - start) * 1000;
+    std::cout << i << std::endl;
+  }
+  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " << getstddev(runtimes, rq) << std::endl;
+  delete runtimes;
+  //--ADDED
+
+  //TODO parallel ranged queries
+
   avg_result_size = 0;
   start = gettime();
   for (size_t r = 0; r < repeat; ++r) {
@@ -214,7 +280,7 @@ int main(int argc, char* argv[]) {
 		(float) ((repeat*rq) / (gettime() - start)),
 		(float) (avg_result_size / (float) (repeat*rq)));
 
-  delete index, kd_tree, vscan_pool;
+  delete index, kd_tree, vscan_pool; //TODO: deletes
 
   return 0;
 }

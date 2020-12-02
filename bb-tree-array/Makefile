@@ -1,4 +1,4 @@
-CC := g++ # This is the main compiler
+CC := g++ -static-libstdc++ # This is the main compiler
 SRCDIR := src
 BUILDDIR := build
 TARGET := bin/benchmark

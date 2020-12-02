@@ -1,0 +1,10 @@
+make clean all
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query1.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query2.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query3.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query4.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query5.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query6.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query7.queries 24
+./benchmark 10000000 19 3 ../../gmrqb-query8.queries 24

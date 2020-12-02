@@ -1,0 +1,25 @@
+make clean all
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 47
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 45
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 43
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 41
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 39
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 37
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 35
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 33
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 31
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 29
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 27
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 25
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 23
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 21
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 19
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 17
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 15
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 13
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 11
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 9
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 7
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 5
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 3 
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 1

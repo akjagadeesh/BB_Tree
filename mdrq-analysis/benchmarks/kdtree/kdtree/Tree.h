@@ -37,6 +37,15 @@ public:
 	    }
     }
 
+    //ADDED--
+    uint32_t searchObject(std::vector<float> feature_vector){
+      uint32_t result = -1;
+      if(root_node != NULL)
+        result = root_node->searchObject(feature_vector);
+      return result;
+    }
+    //--ADDED
+
     std::vector<uint32_t> rangeSearch(std::vector<float> min, std::vector<float> max) {
 	    std::vector<uint32_t> results;
 
