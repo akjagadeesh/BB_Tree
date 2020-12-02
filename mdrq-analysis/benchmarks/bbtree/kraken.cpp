@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include "kraken.h"
 
 KrakenIndex* create_kraken(uint8_t dim, uint32_t dop) {
@@ -20,13 +10,13 @@ void insert(KrakenIndex* index, std::vector<float> point) {
 }
 
 void load_partitions(KrakenIndex* index) {
-  index->kd_trees = new Tree*[index->dop];
+  index->kd_trees = new BBTree*[index->dop];
   for (size_t i = 0; i < index->dop; ++i)
-    index->kd_trees[i] = new Tree();
+    index->bb_trees[i] = new BBTree();
 
   for (size_t i = 0; i < index->dop; ++i) {
     for (size_t j = 0; j < index->partitions[i].size(); ++j) {
-      index->kd_trees[i]->insertObject(index->partitions[i][j], rand() % index->count);
+      index->bb_trees[i]->InsertObject(index->partitions[i][j], rand() % index->count);
     }
   }
 }
@@ -39,25 +29,25 @@ std::vector<uint32_t> intersect(std::vector<uint32_t> first, std::vector<uint32_
   return intersection;
 }
 
-inline void scan_partition_kdtree(int id, Tree* kdtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
-  std::vector<uint32_t> tmp_results = kdtree->rangeSearch(lower, upper);
+inline void scan_partition_kdtree(int id, BBTree* bbtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
+  std::vector<uint32_t> tmp_results = bbtree->SearchRange(lower, upper);
   results.resize(tmp_results.size());
   results = tmp_results;
 }
 
-inline void scan_partition_kdtree_simd(int id, Tree* kdtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
-  std::vector<uint32_t> tmp_results = kdtree->rangeSearchSIMD(lower, upper);
+inline void scan_partition_bbtree_simd(int id, BBTree* bbtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
+  std::vector<uint32_t> tmp_results = bbtree->SearchRangeMT(lower, upper);
   results.resize(tmp_results.size());
   results = tmp_results;
 }
 
-std::vector<uint32_t> partitioned_range_kdtree(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper) {
+std::vector<uint32_t> partitioned_range_bbtree(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper) {
   std::vector<uint32_t> results;
   std::vector<std::vector<uint32_t>> intermediate_results(index->dop, std::vector<uint32_t>());
   std::future<void> *futures = new std::future<void>[index->dop];
 
   for (uint32_t i = 0; i < index->dop; i++)
-    futures[i] = pool->push(std::ref(scan_partition_kdtree), index->kd_trees[i], std::ref(intermediate_results[i]), lower, upper);
+    futures[i] = pool->push(std::ref(scan_partition_bbtree), index->bb_trees[i], std::ref(intermediate_results[i]), lower, upper);
 
   for (uint32_t i = 0; i < index->dop; i++) {
     futures[i].get();
@@ -75,7 +65,7 @@ std::vector<uint32_t> partitioned_range_kdtree_simd(KrakenIndex* index, ctpl::th
   int partitions_visited = 0;
 
   for (uint32_t i = 0; i < index->dop; i++)
-    futures[i] = pool->push(std::ref(scan_partition_kdtree_simd), index->kd_trees[i], std::ref(intermediate_results[i]), lower, upper);
+    futures[i] = pool->push(std::ref(scan_partition_kdtree_simd), index->bb_trees[i], std::ref(intermediate_results[i]), lower, upper);
 
   for (uint32_t i = 0; i < index->dop; i++) {
     futures[i].get();

@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
@@ -34,7 +24,6 @@ static double gettime(void) {
   return ((double)now_tv.tv_sec) + ((double)now_tv.tv_usec) / 1000000.0;
 }
 
-//ADDED--
 // determines the statistical average (mean) of a given sequence of doubles.
 static double getaverage(double* runtimes, size_t n) {
   double sum = 0.0;
@@ -64,7 +53,6 @@ static double getstddev(double* runtimes, size_t n) {
 
   return std_dev;
 }
-//--ADDED
 
 int main(int argc, char* argv[]) {
   if (argc < 4) {
@@ -84,7 +72,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Query Selectivity per Dimension: " << selectivity << std::endl;
   }
 
-  std::vector<std::vector<float> > kdtree_points(n, std::vector<float>(m));
+  std::vector<std::vector<float> > bbtree_points(n, std::vector<float>(m));
   ctpl::thread_pool *vscan_pool;
   KrakenIndex* index;
   if (argc == 6) {
@@ -111,7 +99,7 @@ int main(int argc, char* argv[]) {
       // parse dimensions
       for (size_t j = 0; j < m; ++j)
         data_point[j] = stof(line_tokens[j]);
-      kdtree_points[i++] = data_point;
+      bbtree_points[i++] = data_point;
     }
     std::cout << "Loaded tuples from 1000 Genomes Project." << std::endl;
   } else if (atoi(argv[3]) == 4) {
@@ -129,7 +117,7 @@ int main(int argc, char* argv[]) {
       // parse attributes
       for (size_t j = 1; j < 4; ++j)
         data_point[j-1] = stof(line_tokens[j]);
-      kdtree_points[i++] = data_point;
+      bbtree_points[i++] = data_point;
     }
     std::cout << "Loaded " << n << " tuples from the POWER data set." << std::endl;
   } else if(atoi(argv[3]) == 1) {
@@ -151,7 +139,7 @@ int main(int argc, char* argv[]) {
       // parse attributes
       for (size_t j = 0; j < m; ++j)
         data_point[j] = stof(line_tokens[j]);
-      kdtree_points[i++] = data_point;
+      bbtree_points[i++] = data_point;
     }
     std::cout << "Loaded " << n << " tuples from '" << argv[4] << "'." << std::endl;
   } else {
@@ -166,44 +154,42 @@ int main(int argc, char* argv[]) {
         if (atoi(argv[3]) == 0)
           data_point[j] = (float) nd(gen);
         else
-          data_point[j] = (float) ((ud(gen) % (o * 1000000)) / 1000000.0); //ADDED
+          data_point[j] = (float) ud(gen);
       }
-      kdtree_points[i] = data_point;
+      bbtree_points[i] = data_point;
     }
   }
 
   index->count = n;
 
   // random insertion order of data points
-  std::random_shuffle(kdtree_points.begin(), kdtree_points.end());
+  std::random_shuffle(bbtree_points.begin(), bbtree_points.end());
 
   double start = gettime();
-  //ADDED--
-  double* runtimes;
-  Tree* kd_tree = new Tree();
+  double *runtimes;
+  BBTree* bbtree = new BBTree();
 
-  std::cout << "KDTree [inserts]" << std::endl;
+  std::cout << "BB-Tree [inserts]" << std::endl;
   runtimes = new double[n];
   for (size_t i = 0; i < n; ++i) {
     start = gettime();
-    kd_tree->insertObject(kdtree_points[i], (i+1));
+    bbtree.InsertObject(data_points[i], (uint32_t) (i+1));
     runtimes[i] = (gettime() - start) * 1000000;
-    insert(index, kdtree_points[i]); //used for parallelization
   }
-  load_partitions(index); //used for parallelization
-  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " << getstddev(runtimes, n) << std::endl;
+  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " <<
+               getstddev(runtimes, n) << std::endl;
   delete runtimes;
 
-  std::cout << "KDTree [point queries]" << std::endl;
+  std::cout << "BB-Tree [point queries]" << std::endl;
   runtimes = new double[n];
   for (size_t i = 0; i < n; ++i) {
     start = gettime();
-    assert((i+1) == kd_tree->searchObject(kdtree_points[i]));
+    assert((i+1) == bbtree.SearchObject(data_points[i]));
     runtimes[i] = (gettime() - start) * 1000000;
   }
-  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " << getstddev(runtimes, n) << std::endl;
+  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " <<
+               getstddev(runtimes, n) << std::endl;
   delete runtimes;
-  //--ADDED
 
   int avg_result_size = 0;
   size_t repeat = 1;
@@ -254,19 +240,28 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  //ADDED--
-  std::cout << "KDTree [range queries]" << std::endl;
+  std::cout << "BB-Tree [range queries]" << std::endl;
   runtimes = new double[rq];
   for (size_t i = 0; i < rq; ++i) {
     start = gettime();
-    std::vector<uint32_t> results =  kd_tree->rangeSearch(lb_queries[i],ub_queries[i]);
+    std::vector<uint32_t> results =  bbtree.SearchRange(lb_queries[i], ub_queries[i]);
     runtimes[i] = (gettime() - start) * 1000;
   }
-  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " << getstddev(runtimes, rq) << std::endl;
+  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " <<
+               getstddev(runtimes, rq) << std::endl;
   delete runtimes;
-  //--ADDED
 
-  //TODO parallel ranged queries
+  std::cout << "BB-Tree [range queries/multithreaded]" << std::endl;
+  runtimes = new double[rq];
+  for (size_t i = 0; i < rq; ++i) {
+    start = gettime();
+    std::vector<uint32_t> results =  bbtree.SearchRangeMT(lb_queries[i],
+                                                         ub_queries[i]);
+    runtimes[i] = (gettime() - start) * 1000;
+  }
+  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " <<
+               getstddev(runtimes, rq) << std::endl;
+  delete runtimes;
 
   avg_result_size = 0;
   start = gettime();
@@ -279,7 +274,22 @@ int main(int argc, char* argv[]) {
 		(float) ((repeat*rq) / (gettime() - start)),
 		(float) (avg_result_size / (float) (repeat*rq)));
 
-  delete index, kd_tree, vscan_pool; //TODO: deletes
+  std::cout << "BB-Tree [deletes]" << std::endl;
+  runtimes = new double[n];
+  for (size_t i = 0; i < n; ++i) {
+    std::vector<float> object_to_delete = data_points[i];
+    assert((i+1) == bbtree.SearchObject(object_to_delete));
+    size_t old_count = bbtree.getCount();
+    start = gettime();
+    assert(true == bbtree.DeleteObject(object_to_delete));
+    runtimes[i] = (gettime() - start) * 1000000;
+    assert(old_count-1 == bbtree.getCount());
+  }
+  std::cout << "Mean: " << getaverage(runtimes, n) << " Standard Deviation: " <<
+               getstddev(runtimes, n) << std::endl << std::endl;
+  delete runtimes;
+
+  delete index, kd_tree, vscan_pool;
 
   return 0;
 }

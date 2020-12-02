@@ -255,13 +255,13 @@ int main(int argc, char* argv[]) {
   }
 
   //ADDED--
+  if(n > 1000000) rq = 100;
   std::cout << "KDTree [range queries]" << std::endl;
   runtimes = new double[rq];
   for (size_t i = 0; i < rq; ++i) {
     start = gettime();
     std::vector<uint32_t> results =  kd_tree->rangeSearch(lb_queries[i],ub_queries[i]);
     runtimes[i] = (gettime() - start) * 1000;
-    std::cout << i << std::endl;
   }
   std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " << getstddev(runtimes, rq) << std::endl;
   delete runtimes;
