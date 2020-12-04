@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #ifndef __Kraken_H
 #define __Kraken_H
 

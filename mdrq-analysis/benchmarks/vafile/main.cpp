@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include <cmath>
 #include <cassert>
 #include <cstring>
@@ -31,6 +21,60 @@ static double gettime(void) {
   struct timeval now_tv;
   gettimeofday (&now_tv,NULL);
   return ((double)now_tv.tv_sec) + ((double)now_tv.tv_usec) / 1000000.0;
+}
+static double getaverage(double* runtimes, size_t n) {
+  double sum = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    sum += runtimes[i];
+  }
+
+  return (sum / n);
+}
+
+static double getstddev(double* runtimes, size_t n) {
+  double avg = 0.0;
+  double std_dev = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    avg += runtimes[i];
+  }
+  avg = (avg / n);
+
+  for (size_t i = 0; i < n; ++i) {
+    std_dev += (runtimes[i] - avg) * (runtimes[i] - avg);
+  }
+  std_dev = std_dev / n;
+  std_dev = sqrt(std_dev);
+
+  return std_dev;
+}
+static double getaverage(double* runtimes, size_t n) {
+  double sum = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    sum += runtimes[i];
+  }
+
+  return (sum / n);
+}
+
+static double getstddev(double* runtimes, size_t n) {
+  double avg = 0.0;
+  double std_dev = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    avg += runtimes[i];
+  }
+  avg = (avg / n);
+
+  for (size_t i = 0; i < n; ++i) {
+    std_dev += (runtimes[i] - avg) * (runtimes[i] - avg);
+  }
+  std_dev = std_dev / n;
+  std_dev = sqrt(std_dev);
+
+  return std_dev;
 }
 
 int main(int argc, char* argv[]) {
@@ -141,12 +185,37 @@ int main(int argc, char* argv[]) {
   // random insertion order
   std::random_shuffle(data_points.begin(), data_points.end());
 
+  
   double start = gettime();
+  //ADDED--
+  double* runtimes;
+  
+  std::cout<<"VAFile [inserts]"<<std::endl;
+  runtimes = new double[n];
   for (size_t i = 0; i < n; i++)
-	  insert(index, data_points[i]);
+  {
+	start = gettime();
+	insert(index, data_points[i]);
+	runtimes[i] = (gettime() - start) * 1000000;
+  }
   load_partitions(index);
+  std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
+  delete runtimes;
 
   VAFile va((uint32_t) 4, data_points);
+  
+  std::cout<<"VAFile point queries"<<std::endl;
+  runtimes = new double[n];
+  for(size_t i=0; i<n; ++i)
+  {
+	 
+	start = gettime();
+	std::vector<float> results = va.exactSearch(i);
+	runtimes[i] = (gettime() - start) * 1000000;
+	  
+  }
+	std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
+	delete runtimes;
 
   int avg_result_size = 0;
   size_t repeat = 1;
@@ -197,6 +266,17 @@ int main(int argc, char* argv[]) {
     }
   }
 
+ if(n > 1000000) rq = 100;
+  std::cout << "VAFile [range queries]" << std::endl;
+  runtimes = new double[rq];
+  for (size_t i = 0; i < rq; ++i) {
+    start = gettime();
+    std::vector<uint64_t> results = va.rangeQuerySIMD(lb_queries[i],ub_queries[i]);
+    runtimes[i] = (gettime() - start) * 1000;
+  }
+  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " << getstddev(runtimes, rq) << std::endl;
+  delete runtimes;
+  
   avg_result_size = 0;
   start = gettime();
   for (size_t r = 0; r < repeat; ++r) {

@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #ifndef VAFILE_H
 #define VAFILE_H
 
@@ -47,5 +37,6 @@ class VAFile {
     float getDist(std::vector<float> point1, std::vector<float> point2);
     std::vector<uint64_t> rangeQuery(std::vector<float> lowerBound, std::vector<float> upperBound);
     std::vector<uint64_t> rangeQuerySIMD(std::vector<float> lowerBound, std::vector<float> upperBound);
+	std::vector<float> exactSearch(int i);
 };
 #endif

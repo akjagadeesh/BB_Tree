@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include "vafile.h"
 
 std::vector<uint8_t> VAFile::quantize(std::vector<float> coordinates) {
@@ -244,4 +234,8 @@ std::vector<uint64_t> VAFile::rangeQuerySIMD(std::vector<float> lowerBound, std:
   }
 
   return result;
+}
+std::vector<float> VAFile::exactSearch(int i)
+{
+	return points[i];
 }
