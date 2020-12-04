@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include "kraken.h"
 
 static double gettime(void) {
@@ -302,6 +292,12 @@ inline void scan_dimension_bitmask(int id, KrakenIndex* index, std::vector<uint6
     }
   }
 }
+
+/*std::vector<float> exactSearch(KrakenIndex* index,int i)
+{
+	return index->h_partitions[i][i];
+	
+}*/
 
 std::vector<uint32_t> partitioned_range(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper, uint32_t dop) {
   std::vector<uint32_t> results;

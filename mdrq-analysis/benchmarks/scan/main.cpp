@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #include <cmath>
 #include <cassert>
 #include <cstring>
@@ -31,6 +21,36 @@ static double gettime(void) {
   struct timeval now_tv;
   gettimeofday (&now_tv,NULL);
   return ((double)now_tv.tv_sec) + ((double)now_tv.tv_usec) / 1000000.0;
+}
+
+// determines the statistical average (mean) of a given sequence of doubles.
+static double getaverage(double* runtimes, size_t n) {
+  double sum = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    sum += runtimes[i];
+  }
+
+  return (sum / n);
+}
+
+// determines the standard deviation of a given sequence of doubles.
+static double getstddev(double* runtimes, size_t n) {
+  double avg = 0.0;
+  double std_dev = 0.0;
+
+  for (size_t i = 0; i < n; ++i) {
+    avg += runtimes[i];
+  }
+  avg = (avg / n);
+
+  for (size_t i = 0; i < n; ++i) {
+    std_dev += (runtimes[i] - avg) * (runtimes[i] - avg);
+  }
+  std_dev = std_dev / n;
+  std_dev = sqrt(std_dev);
+
+  return std_dev;
 }
 
 int main(int argc, char* argv[]) {
@@ -145,9 +165,31 @@ int main(int argc, char* argv[]) {
   std::random_shuffle(data_points.begin(), data_points.end());
 
   double start = gettime();
-  for (size_t i = 0; i < n; ++i)
-    insert(index, data_points[i]);
+  double* runtimes;
 
+  runtimes = new double[n];
+  std::cout<<"Scan [inserts]"<<std::endl;
+  for (size_t i = 0; i < n; ++i)
+  {
+    start = gettime();
+	insert(index, data_points[i]);
+	runtimes[i] = (gettime() - start) * 1000000;
+  }
+  std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
+  delete runtimes;
+
+
+  std::cout<<"Scan [Exact Search]"<<std::endl;
+  runtimes = new double[n];
+   for (size_t i = 0; i < n; ++i)
+  {
+    start = gettime();
+	std::vector<float> results = data_points[i];
+	runtimes[i] = (gettime() - start) * 1000000;
+  }
+  std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
+  delete runtimes;
+  
   int avg_result_size = 0;
   size_t repeat = 1;
   // Generate rq queries
@@ -198,13 +240,22 @@ int main(int argc, char* argv[]) {
     }
   }
 
+ 
+  
   avg_result_size = 0;
-  start = gettime();
+ // start = gettime();
+  runtimes = new double[rq*repeat];
+  std::cout<<"Scan range queries"<<std::endl;
   for (size_t r = 0; r < repeat; ++r)  {
     for (size_t i = 0; i < rq; ++i) {
-      avg_result_size += partitioned_range_simd(index, vscan_pool, lb_queries[i], ub_queries[i], threads).size();
+	 start = gettime();
+     avg_result_size += partitioned_range_simd(index, vscan_pool, lb_queries[i], ub_queries[i], threads).size();
+	 runtimes[r+i] = (gettime() - start) * 1000000;
     }
   }
+  std::cout<< "Mean: "<<getaverage(runtimes,rq*repeat)<< " Standard Deviation: " <<getstddev(runtimes,rq*repeat)<<std::endl;
+  delete runtimes;
+  
   printf("MDRQ Throughput (multi-threaded/Vertical Partitioning/SIMD): %f ops/s [avg result size: %f].\n",
          (float) ((rq*repeat) / (gettime() - start)),
          (float) (avg_result_size / (float) (rq*repeat)));
