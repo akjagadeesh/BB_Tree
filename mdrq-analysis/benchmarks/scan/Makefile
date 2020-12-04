@@ -2,7 +2,7 @@ TARGET = benchmark
 LIBS = -fopenmp -lm -lm
 CC = g++
 CXXFLAGS = -mavx -fopenmp -std=c++11 -fno-tree-vectorize
-CFLAGS = -Wall -O3 -g -fopenmp -std=c++11 -mfpmath=both -ffast-math -mavx -fno-tree-vectorize
+CFLAGS = -Wall -O3 -g -fopenmp -std=c++11 -mfpmath=both -ffast-math -mavx -fno-tree-vectorize -static-libstdc++
 
 default: $(TARGET)
 all: default

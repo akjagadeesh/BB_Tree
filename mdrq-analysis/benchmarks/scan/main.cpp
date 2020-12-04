@@ -9,8 +9,8 @@
 #include <random>
 #include <sstream>
 #include <vector>
+#include <unordered_map>
 
-#include "vafile.h"
 #include "kraken.h"
 
 #define FEATUREVECTORS_FILE "../../1000genomes_import/chr22_feature.vectors"
@@ -22,6 +22,8 @@ static double gettime(void) {
   gettimeofday (&now_tv,NULL);
   return ((double)now_tv.tv_sec) + ((double)now_tv.tv_usec) / 1000000.0;
 }
+
+// determines the statistical average (mean) of a given sequence of doubles.
 static double getaverage(double* runtimes, size_t n) {
   double sum = 0.0;
 
@@ -32,33 +34,7 @@ static double getaverage(double* runtimes, size_t n) {
   return (sum / n);
 }
 
-static double getstddev(double* runtimes, size_t n) {
-  double avg = 0.0;
-  double std_dev = 0.0;
-
-  for (size_t i = 0; i < n; ++i) {
-    avg += runtimes[i];
-  }
-  avg = (avg / n);
-
-  for (size_t i = 0; i < n; ++i) {
-    std_dev += (runtimes[i] - avg) * (runtimes[i] - avg);
-  }
-  std_dev = std_dev / n;
-  std_dev = sqrt(std_dev);
-
-  return std_dev;
-}
-static double getaverage(double* runtimes, size_t n) {
-  double sum = 0.0;
-
-  for (size_t i = 0; i < n; ++i) {
-    sum += runtimes[i];
-  }
-
-  return (sum / n);
-}
-
+// determines the standard deviation of a given sequence of doubles.
 static double getstddev(double* runtimes, size_t n) {
   double avg = 0.0;
   double std_dev = 0.0;
@@ -85,26 +61,30 @@ int main(int argc, char* argv[]) {
 
   size_t n = atoi(argv[1]);
   size_t m = atoi(argv[2]);
+  size_t threads = 1;
   int o = 1;
   float selectivity = 0.5;
 
   std::cout << "INFO: " << n << " vectors, " << m << " dimensions." << std::endl;
+
   if (atoi(argv[3]) == 2 && argc == 5) {
     selectivity = atof(argv[4]);
     std::cout << "Query Selectivity per Dimension: " << selectivity << std::endl;
   }
 
-  ctpl::thread_pool *vscan_pool;
+  std::vector< std::vector<float> > data_points(n, std::vector<float>(m));
+  ctpl::thread_pool *hscan_pool, *vscan_pool;
   KrakenIndex* index;
-  std::vector<std::vector<float> > data_points(n, std::vector<float>(m));
   if (argc == 6) {
-	  index = create_kraken(m, atoi(argv[5]));
-	  std::cout << "THREADS: " << argv[5] << std::endl;
-	  vscan_pool = new ctpl::thread_pool(atoi(argv[5]));
+	  hscan_pool = new ctpl::thread_pool(atoi(argv[5]));
+          threads = atoi(argv[5]);
   } else {
-	  index = create_kraken(m, std::thread::hardware_concurrency());
-          vscan_pool = new ctpl::thread_pool(std::thread::hardware_concurrency());
+	  hscan_pool = new ctpl::thread_pool(m);
+	  threads = std::thread::hardware_concurrency();
   }
+  index = create_kraken(m, threads);
+  vscan_pool = new ctpl::thread_pool(threads);
+  std::cout << "THREADS: " << threads << std::endl;
 
   if (atoi(argv[3]) == 3) {
     size_t i = 0;
@@ -181,42 +161,35 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  index->count = n;
   // random insertion order
   std::random_shuffle(data_points.begin(), data_points.end());
 
-  
   double start = gettime();
-  //ADDED--
   double* runtimes;
-  
-  std::cout<<"VAFile [inserts]"<<std::endl;
+
   runtimes = new double[n];
-  for (size_t i = 0; i < n; i++)
+  std::cout<<"Scan [inserts]"<<std::endl;
+  for (size_t i = 0; i < n; ++i)
   {
-	start = gettime();
+    start = gettime();
 	insert(index, data_points[i]);
 	runtimes[i] = (gettime() - start) * 1000000;
   }
-  load_partitions(index);
   std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
   delete runtimes;
 
-  VAFile va((uint32_t) 4, data_points);
-  
-  std::cout<<"VAFile point queries"<<std::endl;
-  runtimes = new double[n];
-  for(size_t i=0; i<n; ++i)
-  {
-	 
-	start = gettime();
-	std::vector<float> results = va.exactSearch(i);
-	runtimes[i] = (gettime() - start) * 1000000;
-	  
-  }
-	std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
-	delete runtimes;
 
+  std::cout<<"Scan [Exact Search]"<<std::endl;
+  runtimes = new double[n];
+   for (size_t i = 0; i < n; ++i)
+  {
+    start = gettime();
+	std::vector<float> results = data_points[i];
+	runtimes[i] = (gettime() - start) * 1000000;
+  }
+  std::cout<< "Mean: "<<getaverage(runtimes,n)<< " Standard Deviation: " <<getstddev(runtimes,n)<<std::endl;
+  delete runtimes;
+  
   int avg_result_size = 0;
   size_t repeat = 1;
   // Generate rq queries
@@ -237,8 +210,9 @@ int main(int argc, char* argv[]) {
       while(std::getline(iss, token, ' '))
         line_tokens.push_back(token);
       for (size_t j = 0; j < m; ++j) {
-        if (line_tokens[j] != "min")
+        if (line_tokens[j] != "min") {
           lb_queries[i][j] = (float) std::stof(line_tokens[j]);
+        }
       }
       std::getline(queries, line);
       std::vector<std::string> line_tokens2;
@@ -259,34 +233,45 @@ int main(int argc, char* argv[]) {
                 lb_queries[i][j] = std::min(data_points[first][j], data_points[second][j]);
                 ub_queries[i][j] = std::max(data_points[first][j], data_points[second][j]);
                 if (argc == 5 && atoi(argv[3]) == 2) {
-                        lb_queries[i][j] = (float) ((rand() % (o * 10000)) / 1000000.0);
-                        ub_queries[i][j] = lb_queries[i][j] + o*selectivity;
-                }	
+			lb_queries[i][j] = (float) ((rand() % (o * 10000)) / 1000000.0);
+			ub_queries[i][j] = lb_queries[i][j] + o*selectivity;
+                }
           }
     }
   }
 
- if(n > 1000000) rq = 100;
-  std::cout << "VAFile [range queries]" << std::endl;
-  runtimes = new double[rq];
-  for (size_t i = 0; i < rq; ++i) {
-    start = gettime();
-    std::vector<uint64_t> results = va.rangeQuerySIMD(lb_queries[i],ub_queries[i]);
-    runtimes[i] = (gettime() - start) * 1000;
-  }
-  std::cout << "Mean: " << getaverage(runtimes, rq) << " Standard Deviation: " << getstddev(runtimes, rq) << std::endl;
-  delete runtimes;
+ 
   
   avg_result_size = 0;
-  start = gettime();
-  for (size_t r = 0; r < repeat; ++r) {
+ // start = gettime();
+  runtimes = new double[rq*repeat];
+  std::cout<<"Scan range queries"<<std::endl;
+  for (size_t r = 0; r < repeat; ++r)  {
     for (size_t i = 0; i < rq; ++i) {
-      avg_result_size += partitioned_range_vafile_simd(index, vscan_pool, lb_queries[i], ub_queries[i]).size();
+	 start = gettime();
+     avg_result_size += partitioned_range_simd(index, vscan_pool, lb_queries[i], ub_queries[i], threads).size();
+	 runtimes[r+i] = (gettime() - start) * 1000000;
     }
   }
-  printf("MDRQ Throughput (multi-threaded/Vertical Partitioning/SIMD): %f ops/s [avg result size: %f].\n", (float) ((repeat*rq) / (gettime() - start)), (float) (avg_result_size / (float) (repeat*rq)));
+  std::cout<< "Mean: "<<getaverage(runtimes,rq*repeat)<< " Standard Deviation: " <<getstddev(runtimes,rq*repeat)<<std::endl;
+  delete runtimes;
+  
+  printf("MDRQ Throughput (multi-threaded/Vertical Partitioning/SIMD): %f ops/s [avg result size: %f].\n",
+         (float) ((rq*repeat) / (gettime() - start)),
+         (float) (avg_result_size / (float) (rq*repeat)));
 
-  delete index, vscan_pool;
+  avg_result_size = 0;
+  start = gettime();
+  for (size_t r = 0; r < repeat; ++r)  {
+    for (size_t i = 0; i < rq; ++i) {
+      avg_result_size += parallel_simd_scan(index, hscan_pool, lb_queries[i], ub_queries[i]).size();
+    }
+  }
+  printf("MDRQ Throughput (multi-threaded/Horizontal Partitioning/SIMD): %f ops/s [avg result size: %f].\n",
+         (float) ((rq*repeat) / (gettime() - start)),
+         (float) (avg_result_size / (float) (rq*repeat)));
+
+  delete index, hscan_pool, vscan_pool;
 
   return 0;
 }

@@ -1,13 +1,3 @@
-/*********************************************************
-*
-*  Research Work of Stefan Sprenger
-*  https://www2.informatik.hu-berlin.de/~sprengsz/
-*
-*  Used solely for scholastic work in course CSCE 614 for
-*  the course research project. Adaptations and additions
-*  are marked with //ADDED ... //ADDED.
-*  
-*********************************************************/
 #ifndef __Kraken_H
 #define __Kraken_H
 
@@ -57,6 +47,7 @@ struct KrakenIndex {
 KrakenIndex* create_kraken(uint8_t dim);
 KrakenIndex* create_kraken(uint8_t dim, uint32_t dop);
 void insert(KrakenIndex* index, std::vector<float> point);
+std::vector<float> exactSearch(KrakenIndex* index,int i);
 std::vector<uint32_t> range(KrakenIndex* index, std::vector<float> lower, std::vector<float> upper);
 std::vector<uint32_t> range_simd(KrakenIndex* index, std::vector<float> lower, std::vector<float> upper);
 std::vector<uint32_t> parallel_range(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper);
