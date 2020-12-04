@@ -1,0 +1,5 @@
+make clean all
+./benchmark 10000 5 0
+./benchmark 100000 5 0
+./benchmark 1000000 5 0
+./benchmark 10000000 5 0

@@ -10,9 +10,9 @@ void insert(KrakenIndex* index, std::vector<float> point) {
 }
 
 void load_partitions(KrakenIndex* index) {
-  index->kd_trees = new BBTree*[index->dop];
+  index->bb_trees = new BBTree*[index->dop];
   for (size_t i = 0; i < index->dop; ++i)
-    index->bb_trees[i] = new BBTree();
+    index->bb_trees[i] = new BBTree(index->dim);
 
   for (size_t i = 0; i < index->dop; ++i) {
     for (size_t j = 0; j < index->partitions[i].size(); ++j) {
@@ -29,7 +29,7 @@ std::vector<uint32_t> intersect(std::vector<uint32_t> first, std::vector<uint32_
   return intersection;
 }
 
-inline void scan_partition_kdtree(int id, BBTree* bbtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
+inline void scan_partition_bbtree(int id, BBTree* bbtree, std::vector<uint32_t> &results, std::vector<float> lower, std::vector<float> upper) {
   std::vector<uint32_t> tmp_results = bbtree->SearchRange(lower, upper);
   results.resize(tmp_results.size());
   results = tmp_results;
@@ -58,14 +58,14 @@ std::vector<uint32_t> partitioned_range_bbtree(KrakenIndex* index, ctpl::thread_
   return results;
 }
 
-std::vector<uint32_t> partitioned_range_kdtree_simd(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper) {
+std::vector<uint32_t> partitioned_range_bbtree_simd(KrakenIndex* index, ctpl::thread_pool *pool, std::vector<float> lower, std::vector<float> upper) {
   std::vector<uint32_t> results;
   std::vector<std::vector<uint32_t>> intermediate_results(index->dop, std::vector<uint32_t>());
   std::future<void> *futures = new std::future<void>[index->dop];
   int partitions_visited = 0;
 
   for (uint32_t i = 0; i < index->dop; i++)
-    futures[i] = pool->push(std::ref(scan_partition_kdtree_simd), index->bb_trees[i], std::ref(intermediate_results[i]), lower, upper);
+    futures[i] = pool->push(std::ref(scan_partition_bbtree_simd), index->bb_trees[i], std::ref(intermediate_results[i]), lower, upper);
 
   for (uint32_t i = 0; i < index->dop; i++) {
     futures[i].get();

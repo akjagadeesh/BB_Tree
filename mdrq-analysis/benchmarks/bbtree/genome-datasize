@@ -1,0 +1,4 @@
+./benchmark 10000 19 3 ../../gmrqb-mixed.queries 64
+./benchmark 100000 19 3 ../../gmrqb-mixed.queries 64
+./benchmark 1000000 19 3 ../../gmrqb-mixed.queries 64
+./benchmark 10000000 19 3 ../../gmrqb-mixed.queries 64

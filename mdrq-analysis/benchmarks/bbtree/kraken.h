@@ -11,7 +11,7 @@
 // AVX Intrinsics (SIMD)
 #include <immintrin.h>
 // kd tree
-#include "bbtree/BBTree.h"
+#include "BBTree.h"
 // Threadpools: https://github.com/vit-vit/CTPL
 #include "ctpl_stl.h"
 

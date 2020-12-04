@@ -1,0 +1,5 @@
+make clean all
+./benchmark 10000 5 1 ../../1Mvectors-5dims-1clusters.arff
+./benchmark 100000 5 1 ../../1Mvectors-5dims-1clusters.arff
+./benchmark 1000000 5 1 ../../1Mvectors-5dims-1clusters.arff
+./benchmark 10000000 5 1 ../../1Mvectors-5dims-1clusters.arff

@@ -241,21 +241,21 @@ int main(int argc, char* argv[]) {
     }
   } else {
     for (size_t i = 0; i < rq; ++i) {
-	  int first  = rand() % n;
-	  int second = rand() % n;
-	  for (size_t j = 0; j < m; ++j) {
-	  	lb_queries[i][j] = std::min(kdtree_points[first][j], kdtree_points[second][j]);
-		ub_queries[i][j] = std::max(kdtree_points[first][j], kdtree_points[second][j]);
-		if (argc == 5 && atoi(argv[3]) == 2) {
-		  lb_queries[i][j] = (float) ((rand() % (o * 10000)) / 1000000.0);
-		  ub_queries[i][j] = lb_queries[i][j] + o*selectivity;
-                }
-	  }
+      int first  = rand() % n;
+      int second = rand() % n;
+      for (size_t j = 0; j < m; ++j) {
+        lb_queries[i][j] = std::min(kdtree_points[first][j], kdtree_points[second][j]);
+        ub_queries[i][j] = std::max(kdtree_points[first][j], kdtree_points[second][j]);
+        if (argc == 5 && atoi(argv[3]) == 2) {
+          lb_queries[i][j] = (float) ((rand() % (o * 10000)) / 1000000.0);
+          ub_queries[i][j] = lb_queries[i][j] + o*selectivity;
+        }
+      }
     }
   }
 
   //ADDED--
-  if(n > 1000000) rq = 100;
+  if(n > 1000000 || atoi(argv[3]) == 1) rq = 100;
   std::cout << "KDTree [range queries]" << std::endl;
   runtimes = new double[rq];
   for (size_t i = 0; i < rq; ++i) {
